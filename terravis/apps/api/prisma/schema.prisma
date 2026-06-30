@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +8,51 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// A registered user of TerraVis. Minimal for now -- Clerk auth gets wired
+// to this in Phase 3, but we need the table to exist so Jobs can reference it.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  jobs Job[] // one user can have many jobs -- this is the "many" side of the relation
+}
+
+// TaskType: which ISRO problem statement this job is solving.
+enum TaskType {
+  CLOUD_REMOVAL  
+  IR_COLORIZATION 
+}
+
+// JobStatus: tracks where this job is in the pipeline, like a shipping label.
+enum JobStatus {
+  PENDING       // job created, not picked up yet
+  PREPROCESSING // ml service is masking/normalizing/patching the image
+  PREPROCESSED  // preprocessing done, ready for model inference
+  PROCESSING    // model inference running
+  COMPLETE      // done, output + metrics available
+  FAILED        // something broke
+}
+
+// The central record of one image-processing request.
+model Job {
+  id     String    @id @default(cuid())
+  status JobStatus @default(PENDING)
+  task   TaskType
+
+  inputFileUrl  String  // where the raw uploaded .tif lives in Backblaze B2
+  outputFileUrl String? // where the processed result lives -- null until COMPLETE
+
+  // Evaluation metrics -- null until the ml service computes them in step 2.10
+  psnr Float?
+  ssim Float?
+  fid  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
