@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  jobs      Job[]
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  taskType    String   // "cloud_removal" or "ir_colorization"
+  status      String   @default("pending") // pending | processing | preprocessed | complete | failed
+  inputUrl    String
+  outputUrl   String?
+  psnr        Float?
+  ssim        Float?
+  fid         Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
