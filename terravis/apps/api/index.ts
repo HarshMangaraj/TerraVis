@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { uploadFile } from "./storage";
+import { uploadFile } from "./src/storage";
 
 const app = express();
 const upload = multer(); // handles multipart/form-data file uploads in memory
