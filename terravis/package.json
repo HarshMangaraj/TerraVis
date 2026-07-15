@@ -1,9 +1,10 @@
 {
   "name": "skyforge",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
+  "workspaces": ["apps/*"],
+  "overrides": {
+    "ioredis": "5.11.1"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build"
