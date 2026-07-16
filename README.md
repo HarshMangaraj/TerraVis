@@ -1,5 +1,7 @@
 # TerraVis
 
+
+
 **Generative AI platform for satellite imagery reconstruction and enhancement.**
 
 TerraVis combines two ISRO hackathon problem statements into a single end-to-end pipeline:
