@@ -1,11 +1,14 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
-export const connection = new IORedis(process.env.REDIS_URL!, {
+export const connection = new IORedis({
+  host: "giving-mongrel-162100.upstash.io",
+  port: 6379,
+  password: process.env.REDIS_PASSWORD!,
+  tls: {},
   maxRetriesPerRequest: null,
 });
 
-connection.on("connect", () => console.log("Redis: connected"));
 connection.on("ready", () => console.log("Redis: ready"));
 connection.on("error", (err) => console.log("Redis ERROR:", err.message));
 

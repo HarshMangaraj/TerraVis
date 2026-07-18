@@ -5,7 +5,7 @@ console.log("connecting...");
 const connection = new IORedis({
   host: "giving-mongrel-162100.upstash.io",
   port: 6379,
-  password: "YOUR_PASSWORD_HERE", // paste it directly, no URL encoding needed here
+  password: "gQAAAAAAAnk0AAIgcDIzOTU0ZjRlYzNjMGE0ODg1YjdiMmRhNDk0ZTZjNTExMQ", // paste it directly, no URL encoding needed here
   tls: {}, // enables TLS/SSL, required by Upstash
   maxRetriesPerRequest: null,
   retryStrategy: () => null,
