@@ -25,17 +25,17 @@ def search_products(bbox: str, cloud_cover_max: int = 80, limit: int = 5):
         f"Collection/Name eq 'SENTINEL-2' "
         f"and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' and att/OData.CSC.StringAttribute/Value eq 'S2MSI2A') "
         f"and OData.CSC.Intersects(area=geography'SRID=4326;POLYGON(({bbox}))') "
-        f"and Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' and att/OData.CSC.DoubleAttribute/Value gt {cloud_cover_max - 20} and att/OData.CSC.DoubleAttribute/Value lt {cloud_cover_max})"
+        f"and Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' and att/OData.CSC.DoubleAttribute/Value gt {cloud_cover_max - 20}) "
+        f"and Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' and att/OData.CSC.DoubleAttribute/Value lt {cloud_cover_max})"
     )
     url = f"https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter={filter_query}&$top={limit}"
     response = requests.get(url)
 
     if response.status_code != 200:
-        print("ERROR BODY:", response.text)  # <-- see the real reason before raising
+        print("ERROR BODY:", response.text)
 
     response.raise_for_status()
     return response.json()["value"]
-
 
 def download_product(product_id: str, product_name: str, token: str, out_dir: str = "."):
     url = f"https://catalogue.dataspace.copernicus.eu/odata/v1/Products({product_id})/$value"
