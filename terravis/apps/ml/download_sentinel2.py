@@ -21,10 +21,6 @@ def get_access_token(username: str, password: str) -> str:
 
 
 def search_products(bbox: str, cloud_cover_max: int = 80, limit: int = 5):
-    """
-    Query the OData catalogue for Sentinel-2 L2A scenes.
-    bbox: WKT polygon string, "lon lat,lon lat,..." (closed ring)
-    """
     filter_query = (
         f"Collection/Name eq 'SENTINEL-2' "
         f"and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' and att/OData.CSC.StringAttribute/Value eq 'S2MSI2A') "
@@ -33,6 +29,10 @@ def search_products(bbox: str, cloud_cover_max: int = 80, limit: int = 5):
     )
     url = f"https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter={filter_query}&$top={limit}"
     response = requests.get(url)
+
+    if response.status_code != 200:
+        print("ERROR BODY:", response.text)  # <-- see the real reason before raising
+
     response.raise_for_status()
     return response.json()["value"]
 
