@@ -41,7 +41,15 @@ def download_product(product_id: str, product_name: str, token: str, out_dir: st
     url = f"https://catalogue.dataspace.copernicus.eu/odata/v1/Products({product_id})/$value"
     headers = {"Authorization": f"Bearer {token}"}
 
-    response = requests.get(url, headers=headers, stream=True)
+    # Don't auto-follow redirects — requests strips the auth header on cross-domain redirects
+    response = requests.get(url, headers=headers, allow_redirects=False)
+
+    if response.status_code in (301, 302, 303, 307, 308):
+        redirect_url = response.headers["Location"]
+        response = requests.get(redirect_url, headers=headers, stream=True)
+    else:
+        response = requests.get(url, headers=headers, stream=True)
+
     response.raise_for_status()
 
     out_path = os.path.join(out_dir, f"{product_name}.zip")

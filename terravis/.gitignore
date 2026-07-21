@@ -1,6 +1,15 @@
 # dependencies (bun install)
 node_modules
 
+# Ignore downloaded Sentinel-2 data
+data/
+extracted/
+*.tif
+*.nc
+*.zip
+*.jp2
+*.SAFE
+
 # output
 out
 dist
