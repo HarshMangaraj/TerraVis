@@ -134,32 +134,57 @@ terravis/
 
 ## 🚀 Setup & Local Development
 
-> **Note**: Full setup instructions for the individual `web`, `api`, and `ml` packages (including required `.env` variables) will be detailed in their respective `README.md` files as they are completed.
-
 ### Prerequisites
 - [Bun](https://bun.sh/) (v1.0.0+)
 - [Python](https://www.python.org/) (3.10+)
 - [Git](https://git-scm.com/)
 
-### Getting Started
+### 1. Web & API (Node/Bun environment)
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/ISRO-Hackathon.git
-   cd ISRO-Hackathon/terravis
-   ```
+Install dependencies across the monorepo:
+```bash
+cd ISRO-Hackathon/terravis
+bun install
+```
 
-2. **Install dependencies**
-   Install all dependencies across the entire monorepo extremely fast using Bun:
-   ```bash
-   bun install
-   ```
+Start the frontend and backend simultaneously using Turborepo:
+```bash
+bun run dev
+```
 
-3. **Run development servers**
-   Start the frontend and backend simultaneously using Turborepo:
-   ```bash
-   bun run dev
-   ```
+### 2. ML Inference Server (Python environment)
+
+Navigate to the ML app and set up a virtual environment:
+```bash
+cd terravis/apps/ml
+python -m venv venv
+
+# On Windows:
+.\venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+```
+
+Install geospatial dependencies. *(Note: On Windows, installing `rasterio` via pre-compiled wheels or conda is recommended over `gdal` to avoid C++ build errors)*:
+```bash
+pip install -r requirements.txt
+# If no requirements file yet: pip install fastapi uvicorn rasterio torch torchvision
+```
+
+Start the ML inference server:
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+---
+
+## 🗺️ Roadmap
+
+- [x] **Phase 1**: Initial setup of monorepo and database schema.
+- [x] **Phase 2**: Implement Sentinel-2 and Landsat data downloading pipelines.
+- [ ] **Phase 3**: Train baseline Pix2Pix and ESRGAN models.
+- [ ] **Phase 4**: Integrate ML inference with FastAPI backend.
+- [ ] **Phase 5**: Build interactive Next.js dashboard for visualizing reconstructed imagery.
 
 ---
 
