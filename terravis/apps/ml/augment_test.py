@@ -24,7 +24,10 @@ with rasterio.open(f"{base}/R20m/T45QUC_20241207T045201_SCL_20m.jp2") as src:
 cloud_mask_full = np.isin(scl_full, [3, 8, 9, 10]).astype(np.uint8)
 # Upsample crudely just for this test (SCL half-resolution window)
 cloud_mask_full = np.repeat(np.repeat(cloud_mask_full, 2, axis=0), 2, axis=1)
-mask_patch = cloud_mask_full[2000:2512, 2000:2512]
+
+# Use the SAME window coordinates as the RGB crop, so they actually align
+(row_start, row_end), (col_start, col_end) = window
+mask_patch = cloud_mask_full[row_start:row_end, col_start:col_end]
 
 # Define the augmentation pipeline
 transform = A.Compose([
