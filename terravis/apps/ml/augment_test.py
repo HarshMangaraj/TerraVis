@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 base = "extracted/S2A_MSIL2A_20241207T045201_N0511_R076_T45QUC_20241207T074151.SAFE/GRANULE/L2A_T45QUC_A049408_20241207T050111/IMG_DATA"
 
 # Load a small patch instead of the full 10980x10980 image — much faster to work with
-window = ((2000, 2512), (2000, 2512))  # a 512x512 pixel crop
+window = ((4000, 4512), (7000, 7512))
 
 with rasterio.open(f"{base}/R10m/T45QUC_20241207T045201_B04_10m.jp2") as src:
     red = src.read(1, window=window)
