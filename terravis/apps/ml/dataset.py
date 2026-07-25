@@ -84,17 +84,16 @@ class LandsatDataset(SatelliteDataset):
     def __init__(self, base_path, patch_coords, patch_size=256, augment=True):
         super().__init__(patch_coords, patch_size, augment)
         self.base_path = base_path
-
     def __getitem__(self, idx):
         row, col = self.patch_coords[idx]
 
-        thermal = self._read_window(f"{self.base_path}_B10.TIF", row, col).astype(np.float32)
+        thermal = self._read_window(f"{self.base_path}_thermal.TIF", row, col).astype(np.float32)
         thermal = (thermal - thermal.min()) / (thermal.max() - thermal.min() + 1e-6)
         thermal = thermal[..., np.newaxis]
 
-        red = self._read_window(f"{self.base_path}_B4.TIF", row, col).astype(np.float32)
-        green = self._read_window(f"{self.base_path}_B3.TIF", row, col).astype(np.float32)
-        blue = self._read_window(f"{self.base_path}_B2.TIF", row, col).astype(np.float32)
+        red = self._read_window(f"{self.base_path}_red.TIF", row, col).astype(np.float32)
+        green = self._read_window(f"{self.base_path}_green.TIF", row, col).astype(np.float32)
+        blue = self._read_window(f"{self.base_path}_blue.TIF", row, col).astype(np.float32)
         rgb = np.stack([red, green, blue], axis=-1)
         rgb = (rgb - rgb.min()) / (rgb.max() - rgb.min() + 1e-6)
 

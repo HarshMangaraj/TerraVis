@@ -57,6 +57,8 @@ async def preprocess_scene(req: PreprocessRequest):
     }
 
 
+# ---------------- PS2 inference ----------------
+
 _ps2_generator = None
 def get_ps2_generator():
     global _ps2_generator
@@ -76,9 +78,9 @@ class InferenceRequest(BaseModel):
 async def run_inference(req: InferenceRequest):
     gen = get_ps2_generator()
 
-    input_patch = np.load(req.patch_npy_path)  # (256, 256, 3), range [0,1]
+    input_patch = np.load(req.patch_npy_path)
     x = torch.from_numpy(input_patch).permute(2, 0, 1).unsqueeze(0).float().to(DEVICE)
-    x = x * 2 - 1  # match training normalization
+    x = x * 2 - 1
 
     with torch.no_grad():
         output = gen(x)
@@ -94,3 +96,41 @@ async def run_inference(req: InferenceRequest):
     psnr = 20 * np.log10(1.0 / np.sqrt(mse)) if mse > 0 else 100.0
 
     return {"job_id": req.job_id, "status": "complete", "output_path": out_path, "psnr": float(psnr)}
+
+
+# ---------------- PS10 inference ----------------
+
+_ps10_generator = None
+def get_ps10_generator():
+    global _ps10_generator
+    if _ps10_generator is None:
+        _ps10_generator = Generator(in_channels=1, out_channels=3).to(DEVICE)
+        _ps10_generator.load_state_dict(torch.load("checkpoints/generator_ps10_epoch5.pth", map_location=DEVICE))
+        _ps10_generator.eval()
+    return _ps10_generator
+
+
+class InferPS10Request(BaseModel):
+    job_id: str
+    thermal_npy_path: str
+
+
+@app.post("/infer-ps10")
+async def run_inference_ps10(req: InferPS10Request):
+    gen = get_ps10_generator()
+
+    thermal_patch = np.load(req.thermal_npy_path)
+    x = torch.from_numpy(thermal_patch).permute(2, 0, 1).unsqueeze(0).float().to(DEVICE)
+    x = x * 2 - 1
+
+    with torch.no_grad():
+        output = gen(x)
+
+    output = (output.squeeze(0).permute(1, 2, 0).cpu().numpy() + 1) / 2
+    output = np.clip(output, 0, 1)
+
+    out_path = f"processed/{req.job_id}/ps10_output.npy"
+    os.makedirs(f"processed/{req.job_id}", exist_ok=True)
+    np.save(out_path, output)
+
+    return {"job_id": req.job_id, "status": "complete", "output_path": out_path}
