@@ -12,7 +12,7 @@ class SatelliteDataset(Dataset):
     """
 
     def __init__(self, patch_coords, patch_size=256, augment=True):
-        self.patch_coords = patch_coords  # list of (row_start, col_start) tuples
+        self.patch_coords = patch_coords
         self.patch_size = patch_size
         self.augment = augment
 
@@ -34,7 +34,6 @@ class SatelliteDataset(Dataset):
     def _apply_augment(self, input_arr, target_arr):
         if not self.augment:
             return input_arr, target_arr
-        # image=/mask= keeps geometric transforms synchronized, exactly like 1.6
         result = self.transform(image=input_arr, mask=target_arr)
         return result["image"], result["mask"]
 
@@ -45,26 +44,23 @@ class SatelliteDataset(Dataset):
 class LISSIVDataset(SatelliteDataset):
     """
     PS2: cloud removal. Builds synthetic cloudy/clear pairs from a single
-    clear Sentinel-2 patch, by pasting a random real cloud shape (sampled
-    from elsewhere in the SAME scene) onto an otherwise-clear target patch.
+    clear Sentinel-2 patch, by pasting a real cloud shape onto a clean patch.
     """
 
     def __init__(self, base_path, clear_coords, cloud_source_coords, patch_size=256, augment=True):
         super().__init__(clear_coords, patch_size, augment)
         self.base_path = base_path
-        self.cloud_source_coords = cloud_source_coords  # coords known to contain real cloud
+        self.cloud_source_coords = cloud_source_coords
 
     def __getitem__(self, idx):
         row, col = self.patch_coords[idx]
 
-        # TARGET: the clean ground-truth patch (RGB, this is what the model should output)
         red = self._read_window(f"{self.base_path}/R10m/T45QUC_20241207T045201_B04_10m.jp2", row, col)
         green = self._read_window(f"{self.base_path}/R10m/T45QUC_20241207T045201_B03_10m.jp2", row, col)
         blue = self._read_window(f"{self.base_path}/R10m/T45QUC_20241207T045201_B02_10m.jp2", row, col)
         target = np.stack([red, green, blue], axis=-1).astype(np.float32) / 3000.0
         target = np.clip(target, 0, 1)
 
-        # INPUT: same patch, with a real cloud shape pasted on top (synthetic pairing)
         cloud_row, cloud_col = self.cloud_source_coords[idx % len(self.cloud_source_coords)]
         cloud_mask_window = ((cloud_row // 2, cloud_row // 2 + self.patch_size // 2),
                               (cloud_col // 2, cloud_col // 2 + self.patch_size // 2))
@@ -72,10 +68,35 @@ class LISSIVDataset(SatelliteDataset):
             scl_patch = src.read(1, window=cloud_mask_window)
         cloud_mask = np.isin(scl_patch, [3, 8, 9, 10]).astype(np.uint8)
         cloud_mask = np.repeat(np.repeat(cloud_mask, 2, axis=0), 2, axis=1)
-        cloud_mask = cloud_mask[:self.patch_size, :self.patch_size]  # guard against off-by-one
+        cloud_mask = cloud_mask[:self.patch_size, :self.patch_size]
 
         input_patch = target.copy()
-        input_patch[cloud_mask.astype(bool)] = [1.0, 1.0, 1.0]  # paint clouds as bright white, like real clouds
+        input_patch[cloud_mask.astype(bool)] = [1.0, 1.0, 1.0]
 
         input_patch, target = self._apply_augment(input_patch, target)
         return input_patch, target
+
+
+class LandsatDataset(SatelliteDataset):
+    """PS10: IR colorization. Input = thermal Band 10 (1 channel),
+    Target = RGB Bands 4/3/2 stacked (3 channels)."""
+
+    def __init__(self, base_path, patch_coords, patch_size=256, augment=True):
+        super().__init__(patch_coords, patch_size, augment)
+        self.base_path = base_path
+
+    def __getitem__(self, idx):
+        row, col = self.patch_coords[idx]
+
+        thermal = self._read_window(f"{self.base_path}_B10.TIF", row, col).astype(np.float32)
+        thermal = (thermal - thermal.min()) / (thermal.max() - thermal.min() + 1e-6)
+        thermal = thermal[..., np.newaxis]
+
+        red = self._read_window(f"{self.base_path}_B4.TIF", row, col).astype(np.float32)
+        green = self._read_window(f"{self.base_path}_B3.TIF", row, col).astype(np.float32)
+        blue = self._read_window(f"{self.base_path}_B2.TIF", row, col).astype(np.float32)
+        rgb = np.stack([red, green, blue], axis=-1)
+        rgb = (rgb - rgb.min()) / (rgb.max() - rgb.min() + 1e-6)
+
+        thermal, rgb = self._apply_augment(thermal, rgb)
+        return thermal, rgb
