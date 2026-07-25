@@ -30,7 +30,9 @@ async def preprocess_scene(req: PreprocessRequest):
     # Same coordinate lists we hand-picked in 1.7 — in a real pipeline these
     # would come from scanning the full scene for clear vs cloudy regions
     clear_coords = [(4000, 7000), (4200, 7200), (4400, 7400), (4600, 7600)]
-    cloud_coords = [(2000, 2000), (2200, 2200)]
+    # PARTIAL-cloud boundary region — NOT the solid cloud bank we used before,
+    # which produced 100% opaque patches with zero visible ground context
+    cloud_coords = [(4000, 7000), (4100, 7100), (4050, 7300)]
 
     dataset = LISSIVDataset(
         req.scene_base_path, clear_coords, cloud_coords, patch_size=256, augment=True
