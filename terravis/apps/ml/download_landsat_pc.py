@@ -28,9 +28,16 @@ def get_signed_url(asset_href):
 def download_band(url, out_path):
     resp = requests.get(url, stream=True)
     resp.raise_for_status()
+    total = int(resp.headers.get("content-length", 0))
+    downloaded = 0
     with open(out_path, "wb") as f:
         for chunk in resp.iter_content(8192):
             f.write(chunk)
+            downloaded += len(chunk)
+            if total:
+                pct = 100 * downloaded / total
+                print(f"\r  {downloaded/1e6:.1f}MB / {total/1e6:.1f}MB ({pct:.0f}%)", end="")
+    print()
 
 
 if __name__ == "__main__":
