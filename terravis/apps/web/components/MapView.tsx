@@ -69,6 +69,13 @@ export default function MapView() {
         className="h-full w-full"
       >
         <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="Basemap &copy; Esri | Sentinel-2 &amp; Landsat via Copernicus / Planetary Computer"
+          maxNativeZoom={16}
+          noWrap={true}
+        />
+
+        <TileLayer
           url={`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`}
           attribution="Live clouds &copy; OpenWeatherMap"
           opacity={0.4}
